@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>New Trains, Same Rails — Web3 DNS Fingerprinting</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+
+
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:        #f7f5f0;
+      --bg-card:   #ffffff;
+      --ink:       #1a1814;
+      --ink-mid:   #4a4640;
+      --ink-light: #8a857d;
+      --rail:      #c8321a;        /* the "rail" accent — rust/danger red */
+      --rail-dim:  #e8d5d0;
+      --mono-bg:   #f0ede6;
+      --border:    #e2ddd6;
+      --shadow:    0 2px 20px rgba(26,24,20,0.07);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 17px;
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── RAIL STRIPE ── */
+    .rail-stripe {
+      height: 4px;
+      background: repeating-linear-gradient(
+        90deg,
+        var(--rail) 0px,
+        var(--rail) 28px,
+        var(--bg) 28px,
+        var(--bg) 36px
+      );
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+    }
+
+    /* ── HEADER ── */
+    header {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 80px 32px 56px;
+      animation: fadeUp 0.7s ease both;
+    }
+
+    .venue-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--rail);
+      background: var(--rail-dim);
+      border-radius: 3px;
+      padding: 4px 10px;
+      margin-bottom: 28px;
+    }
+
+    h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(2rem, 5vw, 3.1rem);
+      line-height: 1.15;
+      color: var(--ink);
+      margin-bottom: 10px;
+      max-width: 720px;
+    }
+
+    h1 em {
+      font-style: italic;
+      color: var(--ink);
+    }
+
+    .subtitle {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      color: var(--ink-light);
+      font-weight: 300;
+      margin-top: 6px;
+      letter-spacing: 0.02em;
+    }
+
+    /* ── AUTHORS ── */
+    .authors-section {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 32px 56px;
+      animation: fadeUp 0.7s 0.1s ease both;
+    }
+
+    .authors-grid {
+      display: flex;
+      gap: 28px;
+      flex-wrap: wrap;
+    }
+
+    .author-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      text-align: center;
+      width: 140px;
+    }
+
+    .author-avatar {
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      background: var(--mono-bg);
+      border: 2px solid var(--border);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .author-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .author-avatar .initials {
+      font-family: 'DM Serif Display', serif;
+      font-size: 22px;
+      color: var(--ink-light);
+      user-select: none;
+    }
+
+    .author-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--ink);
+      line-height: 1.3;
+    }
+
+    .author-name a {
+      color: inherit;
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.2s;
+    }
+    .author-name a:hover { border-color: var(--rail); color: var(--rail); }
+
+    .author-affil {
+      font-size: 12px;
+      color: var(--ink-light);
+      line-height: 1.3;
+    }
+
+    /* ── DIVIDER ── */
+    .divider {
+      max-width: 860px;
+      margin: 0 auto 48px;
+      padding: 0 32px;
+      border: none;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── LINKS BAR ── */
+    .links-bar {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 32px 56px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      animation: fadeUp 0.7s 0.15s ease both;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 18px;
+      border-radius: 4px;
+      font-size: 13.5px;
+      font-weight: 500;
+      font-family: 'DM Sans', sans-serif;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      border: 1.5px solid transparent;
+    }
+
+    .btn-primary {
+      background: var(--ink);
+      color: #fff;
+      border-color: var(--ink);
+    }
+    .btn-primary:hover { background: var(--rail); border-color: var(--rail); }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--ink);
+      border-color: var(--border);
+    }
+    .btn-secondary:hover { border-color: var(--ink); background: var(--mono-bg); }
+
+    .btn svg { flex-shrink: 0; }
+
+    .btn-disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    /* ── MAIN CONTENT ── */
+    main {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 32px 80px;
+    }
+
+    section { margin-bottom: 56px; animation: fadeUp 0.7s 0.2s ease both; }
+
+    h2 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.35rem;
+      color: var(--ink);
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    p { margin-bottom: 14px; color: var(--ink-mid); font-weight: 300; }
+    p:last-child { margin-bottom: 0; }
+
+    /* ── ABSTRACT ── */
+    .abstract-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--rail);
+      border-radius: 4px;
+      padding: 24px 28px;
+      box-shadow: var(--shadow);
+    }
+
+    .abstract-box p {
+      font-size: 15.5px;
+      line-height: 1.75;
+    }
+
+    /* ── FINDINGS ── */
+    .findings-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 16px;
+    }
+
+    .finding-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .finding-stat {
+      font-family: 'DM Serif Display', serif;
+      font-size: 2.2rem;
+      color: var(--rail);
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .finding-desc {
+      font-size: 13px;
+      color: var(--ink-mid);
+      line-height: 1.5;
+      font-weight: 300;
+    }
+
+    /* ── BIBTEX ── */
+    .bibtex-block {
+      background: var(--mono-bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 20px 22px;
+      font-family: 'DM Mono', monospace;
+      font-size: 12.5px;
+      line-height: 1.7;
+      color: var(--ink-mid);
+      white-space: pre;
+      overflow-x: auto;
+      position: relative;
+    }
+
+    .copy-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 4px 10px;
+      font-size: 11px;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      color: var(--ink-light);
+      transition: all 0.15s;
+    }
+    .copy-btn:hover { color: var(--ink); border-color: var(--ink); }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--border);
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 28px 32px 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .footer-lab {
+      font-size: 13px;
+      color: var(--ink-light);
+    }
+
+    .footer-lab a {
+      color: var(--ink);
+      text-decoration: none;
+      font-weight: 500;
+      border-bottom: 1px solid var(--border);
+      transition: border-color 0.2s;
+    }
+    .footer-lab a:hover { border-color: var(--ink); }
+
+    .ack-note {
+      font-size: 12px;
+      color: var(--ink-light);
+      max-width: 420px;
+      line-height: 1.5;
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 600px) {
+      header, .authors-section, .links-bar, main, footer { padding-left: 20px; padding-right: 20px; }
+      .authors-grid { gap: 20px; }
+      .author-card { width: 110px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="rail-stripe"></div>
+
+<!-- HEADER -->
+<header>
+  <div class="venue-tag">
+    <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+      <circle cx="5" cy="5" r="4" stroke="currentColor" stroke-width="1.5"/>
+    </svg>
+    IFIP Networking 2026
+  </div>
+  <h1>New Trains, Same Rails: Fingerprinting Cryptocurrency Software via Network Requests</h1>
+  <!-- <div class="subtitle"></div> -->
+</header>
+
+<!-- AUTHORS -->
+<div class="authors-section">
+  <div class="authors-grid">
+
+    <div class="author-card">
+      <div class="author-avatar">
+        <!-- Replace src with actual photo path, e.g. images/muzammil.jpeg -->
+        <img src="images/author1.jpeg" alt="Muhammad Muzammil">
+        <!-- <span class="initials">MM</span> -->
+      </div>
+      <div>
+        <div class="author-name"><a href="https://muhammad-muzammil.github.io">Muhammad Muzammil</a></div>
+        <div class="author-affil">Stony Brook University</div>
+      </div>
+    </div>
+
+    <div class="author-card">
+      <div class="author-avatar">
+        <!-- Replace src with actual photo path -->
+        <img src="images/author2.jpeg" alt="Oleksii Starov">
+        <!-- <span class="initials">OS</span> -->
+      </div>
+      <div>
+        <div class="author-name"><a href="https://www.linkedin.com/in/oleksiistarov/">Oleksii Starov</a></div>
+        <div class="author-affil">Palo Alto Networks</div>
+      </div>
+    </div>
+
+    <div class="author-card">
+      <div class="author-avatar">
+        <!-- Replace src with actual photo path -->
+        <img src="images/author3.jpg" alt="Zane Ma">
+        <!-- <span class="initials">ZM</span> -->
+      </div>
+      <div>
+        <div class="author-name"><a href="https://zanema.com/">Zane Ma</a></div>
+        <div class="author-affil">Oregon State University</div>
+      </div>
+    </div>
+
+    <div class="author-card">
+      <div class="author-avatar">
+        <!-- Replace src with actual photo path -->
+        <img src="images/author4.jpg" alt="Nick Nikiforakis">
+        <!-- <span class="initials">NN</span> -->
+      </div>
+      <div>
+        <div class="author-name"><a href="https://www.securitee.org/">Nick Nikiforakis</a></div>
+        <div class="author-affil">Stony Brook University</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- LINKS BAR -->
+<div class="links-bar">
+
+  <!-- Replace href with actual PDF path or URL -->
+  <a href="paper.pdf" class="btn btn-primary btn-disabled" title="PDF coming soon">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+    </svg>
+    Paper (PDF -- Coming Soon)
+  </a>
+
+  <!-- Replace href with actual GitHub repo URL -->
+  <a href="https://github.com/PLACEHOLDER/web3-dns-fingerprints" class="btn btn-secondary btn-disabled" title="Data coming soon">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+    </svg>
+    Data (Coming Soon)
+  </a>
+
+  <a href="#bibtex" class="btn btn-secondary">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/>
+    </svg>
+    BibTeX
+  </a>
+
+</div>
+
+<!-- MAIN -->
+<main>
+
+  <!-- ABSTRACT -->
+  <section>
+    <h2>Abstract</h2>
+    <div class="abstract-box">
+      <p>Much of the discourse surrounding blockchain technologies, such as cryptocurrencies, emphasizes enhanced privacy and censorship resistance through decentralization. In practice, however, the privacy and censorship boundaries experienced by users are shaped not only by the underlying cryptographic protocols, but also by the network-facing behavior of the client software through which blockchains are accessed.</p>
+      <p>In this paper, we present the first systematic study of DNS resolution behavior generated by cryptocurrency-supporting client software. We show that this behavior gives rise to application-specific DNS fingerprints that can be observed by network intermediaries. To characterize these fingerprints in practice, we conduct a large-scale measurement study of 40 popular cryptocurrency-supporting applications across 303 versions. We analyze these fingerprints and validate their real-world observability using passive DNS and DNS telemetry from URL filtering logs collected by a large network security provider.</p>
+      <p>Our results demonstrate that DNS activity generated during normal application operation exhibits stable, application-specific patterns that enable intermediaries to identify the application in use and infer sensitive user behavior. This undermines the privacy and censorship-resistance guarantees commonly attributed to blockchain-based systems.</p>
+    </div>
+  </section>
+
+  <!-- KEY FINDINGS -->
+  <section>
+    <h2>Key Findings</h2>
+    <div class="findings-grid">
+      <div class="finding-card">
+        <div class="finding-stat">40</div>
+        <div class="finding-desc">popular cryptocurrency apps studied across 303 versions released 2017–2025</div>
+      </div>
+      <div class="finding-card">
+        <div class="finding-stat">85%</div>
+        <div class="finding-desc">of apps are uniquely identifiable by their DNS footprint alone</div>
+      </div>
+      <div class="finding-card">
+        <div class="finding-stat">45%</div>
+        <div class="finding-desc">of apps are fingerprintable down to their exact version</div>
+      </div>
+      <div class="finding-card">
+        <div class="finding-stat">9</div>
+        <div class="finding-desc">wallet apps whose DNS traffic reveals when a user is conducting a transaction</div>
+      </div>
+      <div class="finding-card">
+        <div class="finding-stat">90%</div>
+        <div class="finding-desc">of backend IP addresses route through only 5 Autonomous Systems</div>
+      </div>
+      <div class="finding-card">
+        <div class="finding-stat">74K+</div>
+        <div class="finding-desc">transaction-related events inferred via DNS alone across ~2,000 enterprise networks</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BIBTEX -->
+  <section id="bibtex">
+    <h2>Citation</h2>
+    <div style="position:relative;">
+      <div class="bibtex-block" id="bibtex-text">@inproceedings{muzammil2026newtrains,
+  title     = {New Trains, Same Rails: Fingerprinting
+               Cryptocurrency Software via Network Requests},
+  author    = {Muzammil, Muhammad and Starov, Oleksii
+               and Ma, Zane and Nikiforakis, Nick},
+  booktitle = {IFIP Networking Conference},
+  year      = {2026}
+}</div>
+      <button class="copy-btn" onclick="copyBibtex(this)">Copy</button>
+    </div>
+  </section>
+
+</main>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-lab">
+    <a href="https://pragseclab.github.io" target="_blank">PragSec Lab</a>
+    &nbsp;·&nbsp; Stony Brook University
+    &nbsp;·&nbsp; 2026
+  </div>
+  <div class="ack-note">
+    This research was supported by the Defense Advanced Research Projects Agency (DARPA). Views expressed are those of the authors.
+  </div>
+</footer>
+
+<script>
+  function copyBibtex(btn) {
+    const text = document.getElementById('bibtex-text').innerText;
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = 'Copied!';
+      setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+    });
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,44 @@
+{
+    "braiins": {
+        "19.06": [],
+        "20.09.1": [],
+        "21.09": [],
+        "22.08.1": [
+            "a830bcc3.bos.braiins.com",
+            "eu.a830bcc3.bos.braiins.com",
+            "us-east.a830bcc3.bos.braiins.com",
+            "us-west.a830bcc3.bos.braiins.com",
+            "ru-west.a830bcc3.bos.braiins.com",
+            "kz.a830bcc3.bos.braiins.com",
+            "br.a830bcc3.bos.braiins.com",
+            "0449e9a241eb.braiins-os.com"
+        ]
+    },
+    "hiveon": {
+        "1.00": [
+            "api.hiveos.farm",
+            "cn.ss.btc.com",
+            "cn.ss.btc.com.lan"
+        ],
+        "1.01": [
+            "download.hiveos.farm",
+            "api.hiveos.farm",
+            "cn.ss.btc.com",
+            "cn.ss.btc.com.lan"
+        ],
+        "1.02": [
+            "download.hiveos.farm",
+            "api.hiveos.farm",
+            "cn.ss.btc.com",
+            "cn.ss.btc.com.lan"
+        ],
+        "1.03": [
+            "download.hiveos.farm",
+            "api.hiveos.farm",
+            "proto3.bytewall.net",
+            "proto14.bytewall.net",
+            "cn.ss.btc.com",
+            "cn.ss.btc.com.lan"
+        ]
+    }
+}
